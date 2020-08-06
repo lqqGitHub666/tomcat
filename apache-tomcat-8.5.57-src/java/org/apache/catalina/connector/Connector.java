@@ -1044,7 +1044,9 @@ public class Connector extends LifecycleMBeanBase  {
         super.initInternal();
 
         // Initialize adapter
+        //初始化适配器
         adapter = new CoyoteAdapter(this);
+        //设置适配器
         protocolHandler.setAdapter(adapter);
 
         // Make sure parseBodyMethodsSet has a default
@@ -1072,6 +1074,10 @@ public class Connector extends LifecycleMBeanBase  {
         }
 
         try {
+            //	Connector默认会有两种：HTTP/1.1、AJP，不同的Connector内部持有不同的CoyoteAdapter和ProtocolHandler，在Connector初始化的时候，也会对ProtocolHandler进行初始化，完成端口的监听
+            //	ProtocolHandler常用的实现有Http11NioProtocol、AjpNioProtocol，还有apr系列的Http11AprProtocol、AjpAprProtocol，apr系列只有在使用apr包的时候才会使用到
+            //	在ProtocolHandler调用init初始化的时候，还会去执行AbstractEndpoint的init方法，完成请求端口绑定、初始化NIO等操作，
+            //在tomcat7中使用JIoEndpoint阻塞IO，而tomcat8中直接移除了JIoEndpoint，具体信息请查看org.apache.tomcat.util.net这个包
             protocolHandler.init();
         } catch (Exception e) {
             throw new LifecycleException(

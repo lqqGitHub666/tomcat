@@ -67,7 +67,7 @@ public final class Bootstrap {
         // Home first
         String home = System.getProperty(Constants.CATALINA_HOME_PROP);
         File homeFile = null;
-
+        //获取tomcat的安装目录
         if (home != null) {
             File f = new File(home);
             try {
@@ -101,12 +101,12 @@ public final class Bootstrap {
                 homeFile = f.getAbsoluteFile();
             }
         }
-
+        //设置catalinaHomeFile，安装目录
         catalinaHomeFile = homeFile;
         System.setProperty(
                 Constants.CATALINA_HOME_PROP, catalinaHomeFile.getPath());
 
-        // Then base
+        // Then base 设置catalinaBaseFile，工作目录，默认情况下工作目录就是安装目录
         String base = System.getProperty(Constants.CATALINA_BASE_PROP);
         if (base == null) {
             catalinaBaseFile = catalinaHomeFile;
@@ -131,9 +131,13 @@ public final class Bootstrap {
      */
     private Object catalinaDaemon = null;
 
-    ClassLoader commonLoader = null;
-    ClassLoader catalinaLoader = null;
-    ClassLoader sharedLoader = null;
+    /**
+     * Tomcat自定义的三个类加载器   打破双亲委派机制
+     * JVM也有类加载器
+     * */
+    ClassLoader commonLoader = null;//tomcat公共类加载器
+    ClassLoader catalinaLoader = null;//应用服务器类加载器
+    ClassLoader sharedLoader = null;//所有web应用类加载器
 
 
     // -------------------------------------------------------- Private Methods
@@ -141,6 +145,7 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
+            //设置父类加载器为null，打破双亲委派机制
             commonLoader = createClassLoader("common", null);
             if (commonLoader == null) {
                 // no config file, default to this loader - we might be in a 'single' env.
@@ -248,21 +253,26 @@ public final class Bootstrap {
      */
     public void init() throws Exception {
 
+        //初始化类加载器
         initClassLoaders();
-
+        //设置当线程的上下文加载器
         Thread.currentThread().setContextClassLoader(catalinaLoader);
-
+        //设置安全机制类加载器
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
+        //加载Catalina类
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
+        //反射创建Catalina实例
         Object startupInstance = startupClass.getConstructor().newInstance();
 
         // Set the shared extensions class loader
         if (log.isDebugEnabled())
             log.debug("Setting startup class properties");
+
+        //以下设置父类加载器
         String methodName = "setParentClassLoader";
         Class<?> paramTypes[] = new Class[1];
         paramTypes[0] = Class.forName("java.lang.ClassLoader");
@@ -271,7 +281,7 @@ public final class Bootstrap {
         Method method =
             startupInstance.getClass().getMethod(methodName, paramTypes);
         method.invoke(startupInstance, paramValues);
-
+        //将创建好并设置好父类加载器的的startupInstance赋值给catalinaDaemon
         catalinaDaemon = startupInstance;
     }
 
@@ -294,6 +304,7 @@ public final class Bootstrap {
             param = new Object[1];
             param[0] = arguments;
         }
+        //反射执行了Catalina对象的load()方法
         Method method =
             catalinaDaemon.getClass().getMethod(methodName, paramTypes);
         if (log.isDebugEnabled()) {
@@ -429,22 +440,32 @@ public final class Bootstrap {
     /**
      * Main method and entry point when starting Tomcat via the provided
      * scripts.
-     *
+     * tomcat 起动过程，初始化---start启动
+     * 1、static静态代码块的加载
+     * 2、main方法的启动
+     * 3、
+     * bootstrap.init();初始化BootStrap
+     * daemon.load(args);解析server.xml文件  初始化server:getServer().init();后续对service、engine、connector、executor、mapperListener进行初始化
+     * daemon.start();
      * @param args Command line arguments to be processed
      */
     public static void main(String args[]) {
 
         synchronized (daemonLock) {
+            //daemon 守护线程
             if (daemon == null) {
                 // Don't set daemon until init() has completed
+                //Bootstrap实例化
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    //执行init
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
                     t.printStackTrace();
                     return;
                 }
+                //引用bootstrap
                 daemon = bootstrap;
             } else {
                 // When running as a service the call to stop will be on a new
@@ -469,6 +490,7 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
+                //
                 daemon.load(args);
                 daemon.start();
                 if (null == daemon.getServer()) {

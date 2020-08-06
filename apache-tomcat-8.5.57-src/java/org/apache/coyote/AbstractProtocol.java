@@ -579,7 +579,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
             Registry.getRegistry(null, null).registerComponent(
                     getHandler().getGlobal(), rgOname, null);
         }
-
+        //初始化监听器
         String endpointName = getName();
         endpoint.setName(endpointName.substring(1, endpointName.length()-1));
         endpoint.setDomain(domain);
