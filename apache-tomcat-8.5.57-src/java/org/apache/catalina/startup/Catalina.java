@@ -677,6 +677,7 @@ public class Catalina {
 
     /**
      * Start a new server instance.
+     * bootstrap.start()会触发此处的start()
      */
     public void start() {
 
@@ -693,6 +694,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            //服务start
             getServer().start();
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);

@@ -417,6 +417,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         setState(LifecycleState.STARTING);
 
         // Start our defined Container first
+        //启动engine
         if (engine != null) {
             synchronized (engine) {
                 engine.start();
@@ -428,7 +429,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 executor.start();
             }
         }
-
+        //启动mapperListener映射器
         mapperListener.start();
 
         // Start our defined Connectors second
@@ -437,6 +438,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 try {
                     // If it has already failed, don't try and start it
                     if (connector.getState() != LifecycleState.FAILED) {
+                        //启动connector
                         connector.start();
                     }
                 } catch (Exception e) {

@@ -446,7 +446,7 @@ public final class Bootstrap {
      * 3、
      * bootstrap.init();初始化BootStrap
      * daemon.load(args);解析server.xml文件  初始化server:getServer().init();后续对service、engine、connector、executor、mapperListener进行初始化
-     * daemon.start();
+     * daemon.start(); 启动server:getServer.start();后续对service、engine、connector、executor、mapperListener进行初启动
      * @param args Command line arguments to be processed
      */
     public static void main(String args[]) {

@@ -67,7 +67,7 @@ public final class Bootstrap {
         // Home first
         String home = System.getProperty(Constants.CATALINA_HOME_PROP);
         File homeFile = null;
-
+        
         if (home != null) {
             File f = new File(home);
             try {
@@ -429,6 +429,10 @@ public final class Bootstrap {
     /**
      * Main method and entry point when starting Tomcat via the provided
      * scripts.
+     * tomcat 起动方法，初始化
+     * 1、static静态大妈快的加载
+     * 2、main方法的启动
+     * 3、
      *
      * @param args Command line arguments to be processed
      */
