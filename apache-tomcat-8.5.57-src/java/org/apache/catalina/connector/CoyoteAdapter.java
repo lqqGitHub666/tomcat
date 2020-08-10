@@ -302,7 +302,7 @@ public class CoyoteAdapter implements Adapter {
 
         Request request = (Request) req.getNote(ADAPTER_NOTES);
         Response response = (Response) res.getNote(ADAPTER_NOTES);
-
+        // 1.将request、response转换为符合Servlet规范的请求响应
         if (request == null) {
             // Create objects
             request = connector.createRequest();
@@ -334,12 +334,16 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
+            // 2.转换请求参数并完成请求映射
+            // 这里会将请求映射到一个具体的Wrapper
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
                 request.setAsyncSupported(
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
+                // 3.得到Container中第一个Valve，执行其invoke方法，这个valve是责任链模式，会接连执行以下的valve
+                // 完成客户端请求
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
             }

@@ -593,7 +593,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
         if (getLog().isInfoEnabled()) {
             getLog().info(sm.getString("abstractProtocolHandler.start", getName()));
         }
-
+        // 主要就是启动endpoint
         endpoint.start();
 
         // Start timeout thread
@@ -724,7 +724,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
             }
 
             S socket = wrapper.getSocket();
-
+            // 1.获取对应的Processor
             Processor processor = connections.get(socket);
             if (getLog().isDebugEnabled()) {
                 getLog().debug(sm.getString("abstractConnectionHandler.connectionsGet",
@@ -742,7 +742,6 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 // This is effectively a NO-OP
                 return SocketState.OPEN;
             }
-
             if (processor != null) {
                 // Make sure an async timeout doesn't fire
                 getProtocol().removeWaitingProcessor(processor);
@@ -755,6 +754,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
             ContainerThreadMarker.set();
 
             try {
+                // 2.如果对应的Processor为空，则各种方式获取，不行的话，最后再新建
                 if (processor == null) {
                     String negotiatedProtocol = wrapper.getNegotiatedProtocol();
                     // OpenSSL typically returns null whereas JSSE typically
@@ -815,9 +815,12 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
                 SocketState state = SocketState.CLOSED;
                 do {
+                    // 3.处理客户端事件
+                    // 主要关注下读事件，如果是读事件，则此时status=SocketEvent.OPEN_READ
                     state = processor.process(wrapper, status);
 
                     if (state == SocketState.UPGRADING) {
+                        // 关于升级Protocol的一系列处理
                         // Get the HTTP upgrade handler
                         UpgradeToken upgradeToken = processor.getUpgradeToken();
                         // Retrieve leftover input
@@ -874,7 +877,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         }
                     }
                 } while ( state == SocketState.UPGRADING);
-
+                // 下面就是一些关于写事件、连接事件等操作，不再细看
                 if (state == SocketState.LONG) {
                     // In the middle of processing a request/response. Keep the
                     // socket associated with the processor. Exact requirements

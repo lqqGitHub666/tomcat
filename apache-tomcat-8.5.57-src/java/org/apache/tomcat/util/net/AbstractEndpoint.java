@@ -1069,12 +1069,15 @@ public abstract class AbstractEndpoint<S> {
             if (socketWrapper == null) {
                 return false;
             }
+            //获取SocketProcessor处理器
             SocketProcessorBase<S> sc = processorCache.pop();
+            // 1.将socketWrapper绑定到SocketProcessor上
             if (sc == null) {
                 sc = createSocketProcessor(socketWrapper, event);
             } else {
                 sc.reset(socketWrapper, event);
             }
+            // 2.获取线程池，并执行SocketProcessor任务，如果没有线程池，则直接执行
             Executor executor = getExecutor();
             if (dispatch && executor != null) {
                 executor.execute(sc);
@@ -1188,7 +1191,9 @@ public abstract class AbstractEndpoint<S> {
 
     public final void start() throws Exception {
         if (bindState == BindState.UNBOUND) {
+            // bind方法主要就是创建ServerSocket，关联到用户指定的地址
             bind();
+            // startInternal是一个抽象方法，默认实现在其子类中
             bindState = BindState.BOUND_ON_START;
         }
         startInternal();
@@ -1265,6 +1270,8 @@ public abstract class AbstractEndpoint<S> {
     protected LimitLatch initializeConnectionLatch() {
         if (maxConnections==-1) return null;
         if (connectionLimitLatch==null) {
+            // 主要就是创建LimitLatch
+            // 通过查看LimitLatch的源码可知，其就是一个最大连接数的限制类
             connectionLimitLatch = new LimitLatch(getMaxConnections());
         }
         return connectionLimitLatch;

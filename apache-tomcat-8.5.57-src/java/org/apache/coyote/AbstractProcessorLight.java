@@ -62,6 +62,9 @@ public abstract class AbstractProcessorLight implements Processor {
                 // Extra write event likely after async, ignore
                 state = SocketState.LONG;
             } else if (status == SocketEvent.OPEN_READ) {
+                // 重点关注读事件，就在这里
+                // service方法是一个抽象方法，由子类负责实现
+                // 本例中我们选择看Http11Processor子类的实现，继续在下面分析
                 state = service(socketWrapper);
             } else if (status == SocketEvent.CONNECT_FAIL) {
                 logAccess(socketWrapper);
